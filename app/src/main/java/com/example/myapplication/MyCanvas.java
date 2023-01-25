@@ -14,6 +14,7 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -37,31 +38,31 @@ public class MyCanvas extends View {
     private com.example.myapplication.MainActivity activity;
 
     private com.example.myapplication.DatabaseConnection db;
+    private int height,width;
 
     public MyCanvas(Context context, com.example.myapplication.MainActivity activity) {
         super(context);
         this.activity = activity;
         this.context = context;
+        db = new com.example.myapplication.DatabaseConnection(activity);
+        gestureDetector = new GestureDetector(context, new GestureListener(db));
 
         paint = new Paint();
         paint.setTypeface(Typeface.create("Arial", Typeface.ITALIC));
-        paint.setTextSize(60);
+        paint.setTextSize(48);
 
         mlocManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
         mlocListener = new MyLocationListener(context);
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
+            ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+            ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
             return;
         }
-        mlocManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 0,mlocListener);
-        db=new com.example.myapplication.DatabaseConnection();
-        gestureDetector = new GestureDetector(context, new GestureListener(db));
+        mlocManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 0, mlocListener);
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        height = displayMetrics.heightPixels;
+        width = displayMetrics.widthPixels;
 
     }
 
@@ -74,31 +75,33 @@ public class MyCanvas extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+
         paint.setColor(Color.GRAY);
         paint.setStrokeWidth(100);
         //canvas.drawRect(new Rect(0,100,200,300),paint);
         //canvas.drawCircle(540,900,500,paint);
         paint.setColor(Color.GREEN);
-        canvas.drawArc(70, 300, 1040, 1400, 0, 180, true, paint);
+        canvas.drawArc(width / 16, height * 2 / 8, width * 15 / 16, height * 6 / 8, 0, 180, true, paint);
         paint.setColor(Color.YELLOW);
-        canvas.drawArc(70, 300, 1040, 1400, 0, -180, true, paint);
+        canvas.drawArc(width / 16, height * 2 / 8, width * 15 / 16, height * 6 / 8, 0, -180, true, paint);
         paint.setColor(Color.RED);
-        canvas.drawArc(70, 300, 1040, 1400, 0, -90, true, paint);
+        canvas.drawArc(width / 16, height * 2 / 8, width * 15 / 16, height * 6 / 8, 0, -90, true, paint);
         paint.setColor(Color.BLUE);
-        canvas.drawArc(70, 300, 1040, 1400, 0, 90, true, paint);
+        canvas.drawArc(width / 16, height * 2 / 8, width * 15 / 16, height * 6 / 8, 0, 90, true, paint);
         paint.setColor(Color.BLACK);
         paint.setFontFeatureSettings("Arial black 14");
-        canvas.drawText("blue sadness ", 100, 2000, paint);
-        canvas.drawText("red anger ", 100, 2050, paint);
-        canvas.drawText("green fear ", 100, 2100, paint);
-        canvas.drawText("yellow happiness", 100, 2150, paint);
+        canvas.drawText("blue sadness ", 100, height - 150, paint);
+        canvas.drawText("red anger ", 100, height - 120, paint);
+        canvas.drawText("green fear ", 100, height - 90, paint);
+        canvas.drawText("yellow happiness", 100, height - 60, paint);
 
     }
 
     private class GestureListener extends GestureDetector.SimpleOnGestureListener {
         private com.example.myapplication.DatabaseConnection db;
+
         public GestureListener(com.example.myapplication.DatabaseConnection db) {
-            this.db=db;
+            this.db = db;
         }
 
         @Override
@@ -113,18 +116,22 @@ public class MyCanvas extends View {
             float y = e.getY();
             emotion = "none";
             if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                // TODO: Consider calling
-                //    ActivityCompat#requestPermissions
+                ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+                ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
 
                 return true;
             }
             Location location = mlocManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            if(location==null){
+                System.out.println("null location");
+            }
             Geocoder gcd = new Geocoder(context,
                     Locale.getDefault());
             List<Address> addresses = null;
             try {
-                addresses = gcd.getFromLocation(location.getLatitude(),
-                        location.getLongitude(), 1);
+                if (location != null)
+                    addresses = gcd.getFromLocation(location.getLatitude(),
+                            location.getLongitude(), 1);
 
 
             } catch (IOException ee) {
@@ -132,44 +139,43 @@ public class MyCanvas extends View {
                 System.out.println("gps failed");
             }
 
-                String straddress =(addresses!=null) ? addresses.get(0).getAddressLine(0):""; // If any additional address line present than only, check with max available address lines by getMaxAddressLineIndex()
-                String city = (addresses!=null) ?addresses.get(0).getLocality():"";
-                String state = (addresses!=null) ?addresses.get(0).getAdminArea():"";
-                String country = (addresses!=null) ?addresses.get(0).getCountryName():"";
-                String postalCode = (addresses!=null) ?addresses.get(0).getPostalCode():"";
-                String knownName = (addresses!=null) ?addresses.get(0).getFeatureName():""; // Only if available else return NULL
-            if(addresses!=null)
+            String straddress = (addresses != null) ? addresses.get(0).getAddressLine(0) : ""; // If any additional address line present than only, check with max available address lines by getMaxAddressLineIndex()
+            String city = (addresses != null) ? addresses.get(0).getLocality() : "";
+            String state = (addresses != null) ? addresses.get(0).getAdminArea() : "";
+            String country = (addresses != null) ? addresses.get(0).getCountryName() : "";
+            String postalCode = (addresses != null) ? addresses.get(0).getPostalCode() : "";
+            String knownName = (addresses != null) ? addresses.get(0).getFeatureName() : ""; // Only if available else return NULL
+            if (addresses != null)
                 System.out.println(addresses.toString());
             Log.d("Double Tap", "Tapped at: (" + x + "," + y + ")");
             AlertDialog alertDialog = new AlertDialog.Builder(context).create();
             alertDialog.setTitle("-> at Location ");
-            if(x>555 && y<854 ){
+            if (x > 14*width/32 && y < (height/2)) {
                 System.out.println("red");
                 alertDialog.setTitle("anger -> at Location ");
-                emotion="anger";
+                emotion = "anger";
             }
-            if(x<555 && y<854 ){
+            if (x < 14*width/32 && y < (height/2)) {
                 System.out.println("yellow");
                 alertDialog.setTitle("happiness -> at Location ");
-                emotion="happiness";
+                emotion = "happiness";
             }
-            if(x>555 && y>854 ){
+            if (x > 14*width/32 && y > (height/2)) {
                 System.out.println("blue");
                 alertDialog.setTitle("sadness -> at Location ");
-                emotion="sadness";
+                emotion = "sadness";
             }
-            if(x<555 && y>854 ){
+            if (x < 14*width/32 && y > (height/2)) {
                 System.out.println("green");
                 alertDialog.setTitle("fear -> at Location ");
-                emotion="fear";
+                emotion = "fear";
             }
 
-            if(location!=null ){
-                if(addresses!=null){
-                alertDialog.setMessage(state); //+ " "+location.getLongitude() +" "+location.getLatitude());}
-            }
-            }
-            else{
+            if (location != null) {
+                if (addresses != null) {
+                    alertDialog.setMessage(state); //+ " "+location.getLongitude() +" "+location.getLatitude());}
+                }
+            } else {
                 alertDialog.setMessage("please enable your location");
             }
             alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
@@ -180,21 +186,21 @@ public class MyCanvas extends View {
                     });
             alertDialog.show();
 
-                if(emotion!=null) {
+            if (emotion != null) {
 
 
-                    try {
+                try {
 
 
-                        db.insertEmotion(emotion, x, y, location.getLongitude(), location.getLatitude(), activity.getX(), activity.getZ(), String.valueOf(activity.getId()));
+                    db.insertEmotion(emotion, x, y, (location!=null)?location.getLongitude():-666, (location!=null)?location.getLatitude():-666, activity.getX(), activity.getZ(), String.valueOf(activity.getId()));
 
 
-                    } catch (SQLException ex) {
-                        throw new RuntimeException(ex);
-
-                    }
+                } catch (SQLException ex) {
+                    throw new RuntimeException(ex);
 
                 }
+
+            }
 
 
             return true;
@@ -202,17 +208,16 @@ public class MyCanvas extends View {
     }
 
 
-
-        public class MyLocationListener implements LocationListener  {
+    public class MyLocationListener implements LocationListener {
         private Context context;
 
-            public MyLocationListener(Context context) {
-                super();
-                this.context = context;
-            }
+        public MyLocationListener(Context context) {
+            super();
+            this.context = context;
+        }
 
-            @Override
-            public void onLocationChanged(Location loc) {
+        @Override
+        public void onLocationChanged(Location loc) {
                 /*
                 loc.getLatitude();
                 loc.getLongitude();
@@ -236,28 +241,27 @@ public class MyCanvas extends View {
                 */
 
 
-            }
+        }
 
-            @Override
-            public void onProviderDisabled(String provider) {
-                Toast.makeText(context, "Gps Disabled",
-                        Toast.LENGTH_SHORT).show();
-                Log.d("gps","disabled");
-
-            }
-
-
-
-            @Override
-            public void onProviderEnabled(String provider) {
-                Toast.makeText(context, "Gps Enabled",
-                        Toast.LENGTH_SHORT).show();
-                Log.d("gps","enabled");
-
-            }
-
+        @Override
+        public void onProviderDisabled(String provider) {
+            Toast.makeText(context, "Gps Disabled",
+                    Toast.LENGTH_SHORT).show();
+            Log.d("gps", "disabled");
 
         }
+
+
+        @Override
+        public void onProviderEnabled(String provider) {
+            Toast.makeText(context, "Gps Enabled",
+                    Toast.LENGTH_SHORT).show();
+            Log.d("gps", "enabled");
+
+        }
+
+
+    }
 
 
 }
