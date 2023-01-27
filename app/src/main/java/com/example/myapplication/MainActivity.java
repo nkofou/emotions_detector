@@ -4,17 +4,25 @@ import android.Manifest;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
+import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.window.SplashScreen;
 
+import androidx.activity.result.ActivityResultCallerKt;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.window.layout.WindowMetrics;
@@ -37,7 +45,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     private boolean accelerometerActive = true;
     private int id;
     private float x = 0, z = 0;
-
+    private DatabaseConnection db;
     public boolean isAccelerometerActive() {
         return accelerometerActive;
     }
@@ -93,6 +101,9 @@ public class MainActivity extends Activity implements SensorEventListener {
             mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
             mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         }
+
+
+
         Random random = new Random();
 
 
@@ -134,6 +145,8 @@ public class MainActivity extends Activity implements SensorEventListener {
         setContentView(linearLayout, relativeParams);
 
 
+
+
     }
 
     public int getId() {
@@ -157,8 +170,8 @@ public class MainActivity extends Activity implements SensorEventListener {
     public void onSensorChanged(SensorEvent sensorEvent) {
         //System.out.println(sensorEvent.values[0]);
         //System.out.println(sensorEvent.values[2]);
-        //x=(sensorEvent.values[0]);
-        //z=(sensorEvent.values[2]);
+        x=(sensorEvent.values[0]);
+        z=(sensorEvent.values[2]);
     }
 
     @Override
@@ -173,4 +186,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     public float getZ() {
         return z;
     }
+
+
+
 }

@@ -2,6 +2,8 @@ package com.example.myapplication;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.view.View;
+import android.widget.ProgressBar;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -11,30 +13,35 @@ import java.sql.SQLException;
 public class DatabaseConnection {
     private Connection conn = null;
     private Activity activity;
+    private boolean isReady=false;
     public DatabaseConnection(Activity activity) {
         this.activity=activity;
+
+
+
         Runnable r = () -> {
 
             String connectionUrl = "jdbc:mariadb://database-1.cu6hfzfkqzau.eu-west-3.rds.amazonaws.com:3306/emotionsdb";
 
             try {
 
-                conn = DriverManager.getConnection(connectionUrl, "admin", "Kk1998!gusthekiller");
+                conn = DriverManager.getConnection(connectionUrl, "admin", "****");
 
 
             } catch (SQLException e) {
                 e.printStackTrace();
                 System.out.println("error");
             }
+            isReady=true;
         };
         Thread t = new Thread(r);
         t.start();
-        try {
-            t.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
 
+
+    }
+
+    public boolean isReady() {
+        return isReady;
     }
 
     public void insertEmotion(String emotion, float ex, float ey, double latitude, double longtitude, float x, float z, String appSessionId) throws SQLException {

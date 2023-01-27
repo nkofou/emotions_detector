@@ -23,6 +23,10 @@ import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnSuccessListener;
+
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
@@ -38,10 +42,14 @@ public class MyCanvas extends View {
     private com.example.myapplication.MainActivity activity;
 
     private com.example.myapplication.DatabaseConnection db;
-    private int height,width;
+    private int height, width;
+
+    private FusedLocationProviderClient fusedLocationClient;
 
     public MyCanvas(Context context, com.example.myapplication.MainActivity activity) {
         super(context);
+
+
         this.activity = activity;
         this.context = context;
         db = new com.example.myapplication.DatabaseConnection(activity);
@@ -50,15 +58,21 @@ public class MyCanvas extends View {
         paint = new Paint();
         paint.setTypeface(Typeface.create("Arial", Typeface.ITALIC));
         paint.setTextSize(48);
-
-        mlocManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-        mlocListener = new MyLocationListener(context);
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
             ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
             return;
         }
+        mlocManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        mlocListener = new MyLocationListener(context);
+        mlocManager.requestLocationUpdates(
+                LocationManager.GPS_PROVIDER, 5000, 10, mlocListener);
+
         mlocManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 0, mlocListener);
+        if (activity.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && activity.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
         DisplayMetrics displayMetrics = new DisplayMetrics();
         activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         height = displayMetrics.heightPixels;
@@ -75,7 +89,21 @@ public class MyCanvas extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        paint.setColor(Color.WHITE);
+        canvas.drawRect(0, 0, (float) height, (float) width, paint);
+        paint.setFontFeatureSettings("Arial black 18");
+        canvas.drawText("LOADING", 100, height - 150, paint);
+        while (db == null || !db.isReady()) {
 
+
+        }
+        this.drawL(canvas);
+
+    }
+
+    public void drawL(Canvas canvas) {
+        paint.setColor(Color.WHITE);
+        canvas.drawRect(0, 0, (float) height, (float) width, paint);
         paint.setColor(Color.GRAY);
         paint.setStrokeWidth(100);
         //canvas.drawRect(new Rect(0,100,200,300),paint);
@@ -94,7 +122,6 @@ public class MyCanvas extends View {
         canvas.drawText("red anger ", 100, height - 120, paint);
         canvas.drawText("green fear ", 100, height - 90, paint);
         canvas.drawText("yellow happiness", 100, height - 60, paint);
-
     }
 
     private class GestureListener extends GestureDetector.SimpleOnGestureListener {
@@ -122,8 +149,14 @@ public class MyCanvas extends View {
                 return true;
             }
             Location location = mlocManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            if(location==null){
+            if (location == null) {
                 System.out.println("null location");
+                location = mlocManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                if (location == null) {
+                    mlocManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+
+                }
+
             }
             Geocoder gcd = new Geocoder(context,
                     Locale.getDefault());
@@ -150,22 +183,22 @@ public class MyCanvas extends View {
             Log.d("Double Tap", "Tapped at: (" + x + "," + y + ")");
             AlertDialog alertDialog = new AlertDialog.Builder(context).create();
             alertDialog.setTitle("-> at Location ");
-            if (x > 14*width/32 && y < (height/2)) {
+            if (x > 14 * width / 32 && y < (height / 2)) {
                 System.out.println("red");
                 alertDialog.setTitle("anger -> at Location ");
                 emotion = "anger";
             }
-            if (x < 14*width/32 && y < (height/2)) {
+            if (x < 14 * width / 32 && y < (height / 2)) {
                 System.out.println("yellow");
                 alertDialog.setTitle("happiness -> at Location ");
                 emotion = "happiness";
             }
-            if (x > 14*width/32 && y > (height/2)) {
+            if (x > 14 * width / 32 && y > (height / 2)) {
                 System.out.println("blue");
                 alertDialog.setTitle("sadness -> at Location ");
                 emotion = "sadness";
             }
-            if (x < 14*width/32 && y > (height/2)) {
+            if (x < 14 * width / 32 && y > (height / 2)) {
                 System.out.println("green");
                 alertDialog.setTitle("fear -> at Location ");
                 emotion = "fear";
@@ -192,7 +225,7 @@ public class MyCanvas extends View {
                 try {
 
 
-                    db.insertEmotion(emotion, x, y, (location!=null)?location.getLongitude():-666, (location!=null)?location.getLatitude():-666, activity.getX(), activity.getZ(), String.valueOf(activity.getId()));
+                    db.insertEmotion(emotion, x, y, (location != null) ? location.getLongitude() : -666, (location != null) ? location.getLatitude() : -666, activity.getX(), activity.getZ(), String.valueOf(activity.getId()));
 
 
                 } catch (SQLException ex) {
