@@ -25,7 +25,7 @@ public class DatabaseConnection {
 
             try {
 
-                conn = DriverManager.getConnection(connectionUrl, "admin", "****");
+                conn = DriverManager.getConnection(connectionUrl, "admin", "Kk1998!gusthekiller");
 
 
             } catch (SQLException e) {
