@@ -1,5 +1,6 @@
-Κύριε Κωστούλα μπορείτε να φτιάξετε το project με gradle Σύμφωνα με τις ακόλουθες οδηγίες:
+You can build the project with gradle according to the following instructions:
 https://developer.android.com/studio/build/building-cmdline
-ή μπορείτε να το ανοίξετε από το android studio. Από την καρτέλα Build, θα επιλέξετε το "Build Bundle(s)/APK(S)" > "Build APK" 
-και μετά Locate στο παραθυράκι που θα βγάλει.
-Στη συνέχεια, θα πρέπει να μεταφέρετε με κάποιον τρόπο (πχ e-mail) το APK αρχείο στη συσκευή σας.
+or you can open it from android studio. 
+From the Build tab, you'll select "Build Bundle(s)/APK(S)" > "Build APK"
+and then Locate in the window that will pop up.
+Then you have to transfer the APK file to your device in some way (e.g. e-mail).
