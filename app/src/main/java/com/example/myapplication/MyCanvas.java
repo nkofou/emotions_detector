@@ -44,7 +44,7 @@ public class MyCanvas extends View {
     private com.example.myapplication.DatabaseConnection db;
     private int height, width;
 
-    private FusedLocationProviderClient fusedLocationClient;
+
 
     public MyCanvas(Context context, com.example.myapplication.MainActivity activity) {
         super(context);
@@ -52,7 +52,7 @@ public class MyCanvas extends View {
 
         this.activity = activity;
         this.context = context;
-        db = new com.example.myapplication.DatabaseConnection(activity);
+
         gestureDetector = new GestureDetector(context, new GestureListener(db));
 
         paint = new Paint();
@@ -89,21 +89,38 @@ public class MyCanvas extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        paint.setColor(Color.WHITE);
-        canvas.drawRect(0, 0, (float) height, (float) width, paint);
-        paint.setFontFeatureSettings("Arial black 18");
-        canvas.drawText("LOADING", 100, height - 150, paint);
-        while (db == null || !db.isReady()) {
-
-
-        }
         this.drawL(canvas);
 
     }
 
     public void drawL(Canvas canvas) {
+        AlertDialog alertDialog = new AlertDialog.Builder(context).create();
+        alertDialog.setTitle("Loading");
+        alertDialog.show();
+        Runnable r = () ->{
+
+            db = new com.example.myapplication.DatabaseConnection(activity);
+            int wait=0;
+            while(!db.isReady()){
+                wait++;
+            }
+            System.out.println(wait);
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            alertDialog.dismiss();
+        };
+        new Thread(r).start();
+
+        while (db == null || !db.isReady()) {
+
+
+        }
         paint.setColor(Color.WHITE);
         canvas.drawRect(0, 0, (float) height, (float) width, paint);
+
         paint.setColor(Color.GRAY);
         paint.setStrokeWidth(100);
         //canvas.drawRect(new Rect(0,100,200,300),paint);
@@ -224,12 +241,12 @@ public class MyCanvas extends View {
 
                 try {
 
-
+                    if(db!=null && db.isReady())
                     db.insertEmotion(emotion, x, y, (location != null) ? location.getLongitude() : -666, (location != null) ? location.getLatitude() : -666, activity.getX(), activity.getZ(), String.valueOf(activity.getId()));
 
 
                 } catch (SQLException ex) {
-                    throw new RuntimeException(ex);
+                    System.out.println(ex.toString());
 
                 }
 
